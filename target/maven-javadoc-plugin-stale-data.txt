@@ -1,0 +1,116 @@
+@options
+@packages
+-classpath
+'C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-security/4.1.0/spring-boot-starter-security-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter/4.1.0/spring-boot-starter-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-logging/4.1.0/spring-boot-starter-logging-4.1.0.jar;C:/Users/abutler/.m2/repository/ch/qos/logback/logback-classic/1.5.34/logback-classic-1.5.34.jar;C:/Users/abutler/.m2/repository/ch/qos/logback/logback-core/1.5.34/logback-core-1.5.34.jar;C:/Users/abutler/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.25.4/log4j-to-slf4j-2.25.4.jar;C:/Users/abutler/.m2/repository/org/apache/logging/log4j/log4j-api/2.25.4/log4j-api-2.25.4.jar;C:/Users/abutler/.m2/repository/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/4.1.0/spring-boot-autoconfigure-4.1.0.jar;C:/Users/abutler/.m2/repository/jakarta/annotation/jakarta.annotation-api/3.0.0/jakarta.annotation-api-3.0.0.jar;C:/Users/abutler/.m2/repository/org/yaml/snakeyaml/2.6/snakeyaml-2.6.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-security/4.1.0/spring-boot-security-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot/4.1.0/spring-boot-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-context/7.0.8/spring-context-7.0.8.jar;C:/Users/abutler/.m2/repository/io/micrometer/micrometer-observation/1.17.0/micrometer-observation-1.17.0.jar;C:/Users/abutler/.m2/repository/io/micrometer/micrometer-commons/1.17.0/micrometer-commons-1.17.0.jar;C:/Users/abutler/.m2/repository/org/springframework/security/spring-security-config/7.1.0/spring-security-config-7.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/security/spring-security-core/7.1.0/spring-security-core-7.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/security/spring-security-crypto/7.1.0/spring-security-crypto-7.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/security/spring-security-web/7.1.0/spring-security-web-7.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-expression/7.0.8/spring-expression-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-web/7.0.8/spring-web-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-aop/7.0.8/spring-aop-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-beans/7.0.8/spring-beans-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-core/7.0.8/spring-core-7.0.8.jar;C:/Users/abutler/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar;C:/Users/abutler/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-webflux/4.1.0/spring-boot-starter-webflux-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-jackson/4.1.0/spring-boot-starter-jackson-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-jackson/4.1.0/spring-boot-jackson-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-reactor-netty/4.1.0/spring-boot-starter-reactor-netty-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-reactor-netty/4.1.0/spring-boot-reactor-netty-4.1.0.jar;C:/Users/abutler/.m2/repository/io/projectreactor/netty/reactor-netty-http/1.3.6/reactor-netty-http-1.3.6.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-http/4.2.15.Final/netty-codec-http-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-http2/4.2.15.Final/netty-codec-http2-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-http3/4.2.15.Final/netty-codec-http3-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/projectreactor/netty/reactor-netty-core/1.3.6/reactor-netty-core-1.3.6.jar;C:/Users/abutler/.m2/repository/io/netty/netty-handler-proxy/4.2.15.Final/netty-handler-proxy-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-socks/4.2.15.Final/netty-codec-socks-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-reactor/4.1.0/spring-boot-reactor-4.1.0.jar;C:/Users/abutler/.m2/repository/io/projectreactor/reactor-core/3.8.6/reactor-core-3.8.6.jar;C:/Users/abutler/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-webflux/4.1.0/spring-boot-webflux-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-http-codec/4.1.0/spring-boot-http-codec-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-webflux/7.0.8/spring-webflux-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-web-server/4.1.0/spring-boot-web-server-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis-reactive/4.1.0/spring-boot-starter-data-redis-reactive-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.1.0/spring-boot-data-redis-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-data-commons/4.1.0/spring-boot-data-commons-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-persistence/4.1.0/spring-boot-persistence-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/data/spring-data-commons/4.1.0/spring-data-commons-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/boot/spring-boot-transaction/4.1.0/spring-boot-transaction-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-tx/7.0.8/spring-tx-7.0.8.jar;C:/Users/abutler/.m2/repository/io/lettuce/lettuce-core/7.5.2.RELEASE/lettuce-core-7.5.2.RELEASE.jar;C:/Users/abutler/.m2/repository/redis/clients/authentication/redis-authx-core/0.1.1-beta2/redis-authx-core-0.1.1-beta2.jar;C:/Users/abutler/.m2/repository/io/netty/netty-common/4.2.15.Final/netty-common-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-handler/4.2.15.Final/netty-handler-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-resolver/4.2.15.Final/netty-resolver-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-buffer/4.2.15.Final/netty-buffer-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-transport-native-unix-common/4.2.15.Final/netty-transport-native-unix-common-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-base/4.2.15.Final/netty-codec-base-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-transport/4.2.15.Final/netty-transport-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-resolver-dns/4.2.15.Final/netty-resolver-dns-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/io/netty/netty-codec-dns/4.2.15.Final/netty-codec-dns-4.2.15.Final.jar;C:/Users/abutler/.m2/repository/org/springframework/data/spring-data-redis/4.1.0/spring-data-redis-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/data/spring-data-keyvalue/4.1.0/spring-data-keyvalue-4.1.0.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-oxm/7.0.8/spring-oxm-7.0.8.jar;C:/Users/abutler/.m2/repository/org/springframework/spring-context-support/7.0.8/spring-context-support-7.0.8.jar;C:/Users/abutler/.m2/repository/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4.jar;C:/Users/abutler/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar;C:/Users/abutler/.m2/repository/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4.jar;C:/Users/abutler/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar;C:/Users/abutler/.m2/repository/com/quark-sw/Qommons/3.0.0/Qommons-3.0.0.jar;C:/Users/abutler/.m2/repository/javax/servlet/javax.servlet-api/4.0.1/javax.servlet-api-4.0.1.jar;C:/Users/abutler/.m2/repository/com/hierynomus/sshj/0.35.0/sshj-0.35.0.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'C:/dev/RandD/synq/src/main/java;C:/dev/RandD/synq/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/dev/RandD/synq/target/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Synq 0.0.1-SNAPSHOT API'
+-use
+-version
+-windowtitle
+'Synq 0.0.1-SNAPSHOT API'
+org.quark.synq
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-security\4.1.0\spring-boot-starter-security-4.1.0.jar = 1784733223201
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter\4.1.0\spring-boot-starter-4.1.0.jar = 1784733220490
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-logging\4.1.0\spring-boot-starter-logging-4.1.0.jar = 1784733220512
+C:\Users\abutler\.m2\repository\ch\qos\logback\logback-classic\1.5.34\logback-classic-1.5.34.jar = 1784733220642
+C:\Users\abutler\.m2\repository\ch\qos\logback\logback-core\1.5.34\logback-core-1.5.34.jar = 1784733220713
+C:\Users\abutler\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.25.4\log4j-to-slf4j-2.25.4.jar = 1784733220633
+C:\Users\abutler\.m2\repository\org\apache\logging\log4j\log4j-api\2.25.4\log4j-api-2.25.4.jar = 1784733220797
+C:\Users\abutler\.m2\repository\org\slf4j\jul-to-slf4j\2.0.18\jul-to-slf4j-2.0.18.jar = 1784733220733
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\4.1.0\spring-boot-autoconfigure-4.1.0.jar = 1784733224203
+C:\Users\abutler\.m2\repository\jakarta\annotation\jakarta.annotation-api\3.0.0\jakarta.annotation-api-3.0.0.jar = 1784733220743
+C:\Users\abutler\.m2\repository\org\yaml\snakeyaml\2.6\snakeyaml-2.6.jar = 1784733220920
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-security\4.1.0\spring-boot-security-4.1.0.jar = 1784733223260
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot\4.1.0\spring-boot-4.1.0.jar = 1784733220768
+C:\Users\abutler\.m2\repository\org\springframework\spring-context\7.0.8\spring-context-7.0.8.jar = 1784733220642
+C:\Users\abutler\.m2\repository\io\micrometer\micrometer-observation\1.17.0\micrometer-observation-1.17.0.jar = 1784733221002
+C:\Users\abutler\.m2\repository\io\micrometer\micrometer-commons\1.17.0\micrometer-commons-1.17.0.jar = 1784733221028
+C:\Users\abutler\.m2\repository\org\springframework\security\spring-security-config\7.1.0\spring-security-config-7.1.0.jar = 1784733223439
+C:\Users\abutler\.m2\repository\org\springframework\security\spring-security-core\7.1.0\spring-security-core-7.1.0.jar = 1784733223360
+C:\Users\abutler\.m2\repository\org\springframework\security\spring-security-crypto\7.1.0\spring-security-crypto-7.1.0.jar = 1784733223308
+C:\Users\abutler\.m2\repository\org\springframework\security\spring-security-web\7.1.0\spring-security-web-7.1.0.jar = 1784733223427
+C:\Users\abutler\.m2\repository\org\springframework\spring-expression\7.0.8\spring-expression-7.0.8.jar = 1784733220154
+C:\Users\abutler\.m2\repository\org\springframework\spring-web\7.0.8\spring-web-7.0.8.jar = 1784733224054
+C:\Users\abutler\.m2\repository\org\springframework\spring-aop\7.0.8\spring-aop-7.0.8.jar = 1784733223448
+C:\Users\abutler\.m2\repository\org\springframework\spring-beans\7.0.8\spring-beans-7.0.8.jar = 1784733223583
+C:\Users\abutler\.m2\repository\org\springframework\spring-core\7.0.8\spring-core-7.0.8.jar = 1784733220543
+C:\Users\abutler\.m2\repository\commons-logging\commons-logging\1.3.6\commons-logging-1.3.6.jar = 1784733220149
+C:\Users\abutler\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar = 1784733221022
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-webflux\4.1.0\spring-boot-starter-webflux-4.1.0.jar = 1785188219941
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-jackson\4.1.0\spring-boot-starter-jackson-4.1.0.jar = 1784733223102
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-jackson\4.1.0\spring-boot-jackson-4.1.0.jar = 1784733223167
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-reactor-netty\4.1.0\spring-boot-starter-reactor-netty-4.1.0.jar = 1785188220125
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-reactor-netty\4.1.0\spring-boot-reactor-netty-4.1.0.jar = 1785188220138
+C:\Users\abutler\.m2\repository\io\projectreactor\netty\reactor-netty-http\1.3.6\reactor-netty-http-1.3.6.jar = 1785188220321
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-http\4.2.15.Final\netty-codec-http-4.2.15.Final.jar = 1785188220194
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-compression\4.2.15.Final\netty-codec-compression-4.2.15.Final.jar = 1785188220210
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-http2\4.2.15.Final\netty-codec-http2-4.2.15.Final.jar = 1785188220381
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-http3\4.2.15.Final\netty-codec-http3-4.2.15.Final.jar = 1785188220314
+C:\Users\abutler\.m2\repository\io\projectreactor\netty\reactor-netty-core\1.3.6\reactor-netty-core-1.3.6.jar = 1785188220788
+C:\Users\abutler\.m2\repository\io\netty\netty-handler-proxy\4.2.15.Final\netty-handler-proxy-4.2.15.Final.jar = 1785188220746
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-socks\4.2.15.Final\netty-codec-socks-4.2.15.Final.jar = 1785188220804
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-reactor\4.1.0\spring-boot-reactor-4.1.0.jar = 1784733222258
+C:\Users\abutler\.m2\repository\io\projectreactor\reactor-core\3.8.6\reactor-core-3.8.6.jar = 1784733222573
+C:\Users\abutler\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar = 1784733222046
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-webflux\4.1.0\spring-boot-webflux-4.1.0.jar = 1785188220836
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-http-codec\4.1.0\spring-boot-http-codec-4.1.0.jar = 1785188220836
+C:\Users\abutler\.m2\repository\org\springframework\spring-webflux\7.0.8\spring-webflux-7.0.8.jar = 1785188220926
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-web-server\4.1.0\spring-boot-web-server-4.1.0.jar = 1784733225789
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-starter-data-redis-reactive\4.1.0\spring-boot-starter-data-redis-reactive-4.1.0.jar = 1791211948309
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-data-redis\4.1.0\spring-boot-data-redis-4.1.0.jar = 1791211948414
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-data-commons\4.1.0\spring-boot-data-commons-4.1.0.jar = 1784733222152
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-persistence\4.1.0\spring-boot-persistence-4.1.0.jar = 1784733222162
+C:\Users\abutler\.m2\repository\org\springframework\data\spring-data-commons\4.1.0\spring-data-commons-4.1.0.jar = 1784733222463
+C:\Users\abutler\.m2\repository\org\springframework\boot\spring-boot-transaction\4.1.0\spring-boot-transaction-4.1.0.jar = 1784733223060
+C:\Users\abutler\.m2\repository\org\springframework\spring-tx\7.0.8\spring-tx-7.0.8.jar = 1784733222287
+C:\Users\abutler\.m2\repository\io\lettuce\lettuce-core\7.5.2.RELEASE\lettuce-core-7.5.2.RELEASE.jar = 1791211948715
+C:\Users\abutler\.m2\repository\redis\clients\authentication\redis-authx-core\0.1.1-beta2\redis-authx-core-0.1.1-beta2.jar = 1791211948456
+C:\Users\abutler\.m2\repository\io\netty\netty-common\4.2.15.Final\netty-common-4.2.15.Final.jar = 1784733221464
+C:\Users\abutler\.m2\repository\io\netty\netty-handler\4.2.15.Final\netty-handler-4.2.15.Final.jar = 1784733221365
+C:\Users\abutler\.m2\repository\io\netty\netty-resolver\4.2.15.Final\netty-resolver-4.2.15.Final.jar = 1784733221362
+C:\Users\abutler\.m2\repository\io\netty\netty-buffer\4.2.15.Final\netty-buffer-4.2.15.Final.jar = 1784733221388
+C:\Users\abutler\.m2\repository\io\netty\netty-transport-native-unix-common\4.2.15.Final\netty-transport-native-unix-common-4.2.15.Final.jar = 1784733221463
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-base\4.2.15.Final\netty-codec-base-4.2.15.Final.jar = 1784733221490
+C:\Users\abutler\.m2\repository\io\netty\netty-transport\4.2.15.Final\netty-transport-4.2.15.Final.jar = 1784733221472
+C:\Users\abutler\.m2\repository\io\netty\netty-resolver-dns\4.2.15.Final\netty-resolver-dns-4.2.15.Final.jar = 1785188220548
+C:\Users\abutler\.m2\repository\io\netty\netty-codec-dns\4.2.15.Final\netty-codec-dns-4.2.15.Final.jar = 1785188220647
+C:\Users\abutler\.m2\repository\org\springframework\data\spring-data-redis\4.1.0\spring-data-redis-4.1.0.jar = 1791211948712
+C:\Users\abutler\.m2\repository\org\springframework\data\spring-data-keyvalue\4.1.0\spring-data-keyvalue-4.1.0.jar = 1791211948515
+C:\Users\abutler\.m2\repository\org\springframework\spring-oxm\7.0.8\spring-oxm-7.0.8.jar = 1791211948493
+C:\Users\abutler\.m2\repository\org\springframework\spring-context-support\7.0.8\spring-context-support-7.0.8.jar = 1791211948579
+C:\Users\abutler\.m2\repository\tools\jackson\core\jackson-databind\3.1.4\jackson-databind-3.1.4.jar = 1784733224345
+C:\Users\abutler\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.21\jackson-annotations-2.21.jar = 1784733224309
+C:\Users\abutler\.m2\repository\tools\jackson\core\jackson-core\3.1.4\jackson-core-3.1.4.jar = 1784733224362
+C:\Users\abutler\.m2\repository\org\slf4j\slf4j-api\2.0.18\slf4j-api-2.0.18.jar = 1784733221920
+C:\Users\abutler\.m2\repository\com\quark-sw\Qommons\3.0.0\Qommons-3.0.0.jar = 1792083501232
+C:\Users\abutler\.m2\repository\javax\servlet\javax.servlet-api\4.0.1\javax.servlet-api-4.0.1.jar = 1524208759000
+C:\Users\abutler\.m2\repository\com\hierynomus\sshj\0.35.0\sshj-0.35.0.jar = 1675152848000
+C:\dev\RandD\synq\src\main\java = 1793113266136
+C:\dev\RandD\synq\target\generated-sources\annotations = 1793129538608
+C:\dev\RandD\synq\target\apidocs\allclasses-index.html = 1793129544276
+C:\dev\RandD\synq\target\apidocs\allpackages-index.html = 1793129544279
+C:\dev\RandD\synq\target\apidocs\element-list = 1793129544152
+C:\dev\RandD\synq\target\apidocs\help-doc.html = 1793129544319
+C:\dev\RandD\synq\target\apidocs\index-all.html = 1793129544307
+C:\dev\RandD\synq\target\apidocs\index.html = 1793129544314
+C:\dev\RandD\synq\target\apidocs\member-search-index.js = 1793129544289
+C:\dev\RandD\synq\target\apidocs\module-search-index.js = 1793129544282
+C:\dev\RandD\synq\target\apidocs\overview-tree.html = 1793129544259
+C:\dev\RandD\synq\target\apidocs\package-search-index.js = 1793129544284
+C:\dev\RandD\synq\target\apidocs\search.html = 1793129544311
+C:\dev\RandD\synq\target\apidocs\tag-search-index.js = 1793129544291
+C:\dev\RandD\synq\target\apidocs\type-search-index.js = 1793129544286

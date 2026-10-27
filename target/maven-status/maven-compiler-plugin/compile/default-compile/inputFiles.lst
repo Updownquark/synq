@@ -1,0 +1,10 @@
+C:\dev\RandD\synq\src\main\java\org\quark\synq\EntityMutationEvent.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\EntityMutationNotificationService.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\LocalMutationNotificationService.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\MessageId.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\RedisMutationNotificationService.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\SyncController.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\SyncDataSource.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\SyncService.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\SyncUserResolver.java
+C:\dev\RandD\synq\src\main\java\org\quark\synq\SynqAutoConfiguration.java
