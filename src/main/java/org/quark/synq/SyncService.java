@@ -571,10 +571,10 @@ public class SyncService<U> {
 				.append(",\"sequence\":").append(theSequence.getAndIncrement())//
 				.append(",\"entityType\":\"").append(dataSource.getEntityTypeName()).append('"')//
 				.append(",\"entities\":[");
-			boolean first = true;
-			Collection<T> initialEntities = dataSource.queryEntities(typeSubscriptions.values().stream()
+			boolean[] first = { true };
+			Flux<T> initialEntities = dataSource.queryEntities(typeSubscriptions.values().stream()
 				.map(sub -> (SyncDataSubscription<U, T>) sub).map(sub -> sub.getFilters(false)).toList());
-			for (T entity : initialEntities) {
+			initialEntities.toStream().forEach(entity -> {
 				boolean include = false;
 				for (SyncDataSubscription<U, ?> sub : typeSubscriptions.values()) {
 					if (((SyncDataSubscription<U, T>) sub).isIncluded(entity)) {
@@ -583,13 +583,13 @@ public class SyncService<U> {
 					}
 				}
 				if (include) {
-					if (first)
-						first = false;
+					if (first[0])
+						first[0] = false;
 					else
 						initialDataJson.append(',');
 					initialDataJson.append(dataSource.serialize(entity).toString());
 				}
-			}
+			});
 			initialDataJson.append("]}");
 			return initialDataJson.toString();
 		}
@@ -656,12 +656,12 @@ public class SyncService<U> {
 				if (targetFilters.isEmpty())
 					clientEventJson.with("entities", Collections.emptyList());
 				else {
-					Collection<T> initialEntities = event.source.queryEntities(targetFilters);
+					Flux<T> initialEntities = event.source.queryEntities(targetFilters);
 					Map<String, SyncDataSubscription<U, ?>> activeSubs = theSubscriptions.get(typeName);
 					if (activeSubs == null)
 						clientEventJson.with("entities", Collections.emptyList());
 					else {
-						clientEventJson.with("entities", initialEntities.stream()//
+						clientEventJson.with("entities", initialEntities.toStream()//
 							.filter(entity -> activeSubs.values().stream()
 								.anyMatch(sub -> ((SyncDataSubscription<U, T>) sub).isIncluded(entity)))//
 							.map(entity -> event.source.serialize(entity))//
@@ -765,7 +765,7 @@ public class SyncService<U> {
 
 			SyncDataSource<U, T> source = (SyncDataSource<U, T>) theDataSources.get(entityType);
 			// Query the database safely outside all locks
-			Collection<T> potentiallyRevokedEntities = source.queryEntities(revokedFilters);
+			Flux<T> potentiallyRevokedEntities = source.queryEntities(revokedFilters);
 
 			synchronized (theSubscriptions) {
 				Map<String, SyncDataSubscription<U, ?>> typeSubscriptions = theSubscriptions.get(entityType);
@@ -775,17 +775,16 @@ public class SyncService<U> {
 					typeSubscriptions.keySet().removeAll(revocations);
 					if (typeSubscriptions.isEmpty()) {
 						theSubscriptions.remove(entityType);
-						typeSubscriptions = null;
 					}
 				}
 
 				// Evaluate visibility safely inside the lock block.
 				// No concurrent API call can modify the filters while this loop executes.
 				JsonObject json = new JsonObject();
-				for (T entity : potentiallyRevokedEntities) {
+				potentiallyRevokedEntities.toStream().forEach(entity -> {
 					boolean stillVisible = false;
 
-					if (typeSubscriptions != null) {
+					if (typeSubscriptions != null && !typeSubscriptions.isEmpty()) {
 						stillVisible = typeSubscriptions.values().stream()
 							.anyMatch(sub -> ((SyncDataSubscription<U, T>) sub).isIncluded(entity));
 					}
@@ -801,7 +800,7 @@ public class SyncService<U> {
 								.toString())//
 							.build());
 					}
-				}
+				});
 			}
 		}
 	}

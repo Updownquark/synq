@@ -5,17 +5,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.qommons.fn.FunctionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.reactive.TransactionContextManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 import tools.jackson.databind.ObjectMapper;
 
 /** A notification service that handles publishing of events signifying changes to entity sets */
@@ -86,8 +88,6 @@ public abstract class EntityMutationNotificationService {
 
 	static final Logger log = LoggerFactory.getLogger(EntityMutationNotificationService.class);
 
-	private final ApplicationEventPublisher theInternalEventPublisher;
-
 	private final Map<String, EntitySerializerHolder<?>> theSerializers = new ConcurrentHashMap<>();
 
 	private final Sinks.Many<EntityMutationEvent> theLocalSink = Sinks.many().unicast().onBackpressureBuffer();
@@ -97,12 +97,8 @@ public abstract class EntityMutationNotificationService {
 
 	/**
 	 * Creates the notification service
-	 * 
-	 * @param internalEventPublisher The Spring event publisher to utilize for internal events
 	 */
-	protected EntityMutationNotificationService(ApplicationEventPublisher internalEventPublisher) {
-		theInternalEventPublisher = internalEventPublisher;
-	}
+	protected EntityMutationNotificationService() {}
 
 	/**
 	 * Installs an event serializer in this notification service, enabling it to recognize a new type of entity
@@ -136,9 +132,50 @@ public abstract class EntityMutationNotificationService {
 			throw new IllegalArgumentException(
 				"Given entity is not an instance of " + entityTypeName + " (" + serializer.entityType.getName() + ")");
 		String entityJson = serializer.serializer.serialize(entity);
-		InternalDataMutationEvent internalEvent = new InternalDataMutationEvent(this, entityTypeName, present, entityJson);
-		theInternalEventPublisher.publishEvent(internalEvent);
-		return internalEvent.messageId.asMono().flatMap(FunctionUtils.identity());
+
+		// Core business logic definition
+		Mono<MessageId> globalMutationExecution = Mono.defer(() -> publishGlobalMutation(entityTypeName, present, entityJson));
+
+		// Let's inspect the ThreadLocal to check if we are in an imperative WebMVC/JDBC Transaction
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			if (log.isDebugEnabled()) {
+				log.debug("Imperative transaction active. Postponing global mutation publication until AFTER_COMMIT.");
+			}
+
+			Sinks.One<MessageId> imperativeBridgeSink = Sinks.one();
+
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					if (log.isDebugEnabled()) {
+						log.debug("Post-commit " + entityTypeName + " event triggered (WebMVC)");
+					}
+					// Offload the Redis I/O to boundedElastic so we don't freeze the JDBC execution thread
+					globalMutationExecution.subscribeOn(Schedulers.boundedElastic()).subscribe(imperativeBridgeSink::tryEmitValue,
+						imperativeBridgeSink::tryEmitError);
+				}
+			});
+
+			return imperativeBridgeSink.asMono();
+		}
+
+		// Otherwise, assume a Reactive (WebFlux/R2DBC) environment or no transaction context.
+		// We defer to Reactor Context exploration to attach afterCommit behavior reactively.
+		return TransactionContextManager.currentContext().flatMap(_ -> {
+			if (log.isDebugEnabled()) {
+				log.debug("Reactive transaction context found. Executing reactively.");
+			}
+			// If your R2DBC configuration manages transactional completions downstream,
+			// we directly run the global pipeline inside the stream.
+			return globalMutationExecution;
+		})
+			// Fallback: If no transaction context exists (pure fire-and-forget or non-transactional thread)
+			.onErrorResume(_ -> {
+				if (log.isDebugEnabled()) {
+					log.debug("No active transaction context found. Executing immediately.");
+				}
+				return globalMutationExecution;
+			});
 	}
 
 	Flux<EntityMutationEvent> mutations() {

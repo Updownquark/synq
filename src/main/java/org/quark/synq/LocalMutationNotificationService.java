@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.qommons.ArrayUtils;
 import org.qommons.collect.BetterList;
 import org.qommons.collect.CircularArrayList;
-import org.springframework.context.ApplicationEventPublisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,12 +21,10 @@ public class LocalMutationNotificationService extends EntityMutationNotification
 	/**
 	 * Creates the event service
 	 * 
-	 * @param internalEventPublisher The spring event publisher to utilize internally
 	 * @param maxEvents The maximum number of events to keep in the cache. Affects the ability of clients to be updated after a temporary
 	 *        connection loss without needing to completely repopulate the data set.
 	 */
-	public LocalMutationNotificationService(ApplicationEventPublisher internalEventPublisher, int maxEvents) {
-		super(internalEventPublisher);
+	public LocalMutationNotificationService(int maxEvents) {
 		theEventCache = CircularArrayList.build()//
 			.withMaxCapacity(maxEvents)//
 			.build();

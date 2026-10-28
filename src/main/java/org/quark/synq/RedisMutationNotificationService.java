@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.connection.RedisStreamCommands.TrimOptions;
 import org.springframework.data.redis.connection.RedisStreamCommands.XAddOptions;
 import org.springframework.data.redis.connection.stream.MapRecord;
@@ -37,14 +36,11 @@ public class RedisMutationNotificationService extends EntityMutationNotification
 	 * Creates the event service
 	 * 
 	 * @param redisTemplate The REDIS template
-	 * @param internalEventPublisher The spring event publisher for internal use
 	 * @param streamKey The name of the stream key for the events
 	 * @param maxEvents The maximum number of events to keep in the cache. Affects the ability of clients to be updated after a temporary
 	 *        connection loss without needing to completely repopulate the data set.
 	 */
-	public RedisMutationNotificationService(ReactiveRedisTemplate<String, String> redisTemplate,
-		ApplicationEventPublisher internalEventPublisher, String streamKey, int maxEvents) {
-		super(internalEventPublisher);
+	public RedisMutationNotificationService(ReactiveRedisTemplate<String, String> redisTemplate, String streamKey, int maxEvents) {
 		theRedisTemplate = redisTemplate;
 		theStreamKey = streamKey;
 		theMaxAllowedEvents = maxEvents;
