@@ -6,11 +6,11 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.qommons.json.JsonObject;
 import org.quark.synq.SyncService.SyncDataEvent;
 
+import reactor.core.publisher.Flux;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -236,7 +236,7 @@ public interface SyncDataSource<U, T> {
 	 *         <b>THIS METHOD MUST NOT FILTER BASED ON PERMISSIONS or any other criterion other than the filters parameter.</b><br>
 	 *         The opportunity for permission checks happens in {@link #validateSubscription(Object, Map)}.
 	 */
-	Collection<T> queryEntities(List<Map<String, SyncDataSource.SyncDataFilter<T>>> filters);
+	Flux<T> queryEntities(List<Map<String, SyncDataSource.SyncDataFilter<T>>> filters);
 
 	/**
 	 * Reflection-based partial {@link SyncDataSource} implementation
@@ -431,7 +431,7 @@ public interface SyncDataSource<U, T> {
 		 * @param authFieldValue The authorization field value to get entities for
 		 * @return All entities in the data store with the given value for the authorization field
 		 */
-		protected abstract Stream<T> getEntities(ID authFieldValue);
+		protected abstract Flux<T> getEntities(ID authFieldValue);
 
 		@Override
 		public ValidationMaintainer<U> validateSubscription(U user, Map<String, SyncDataFilter<T>> filters)
@@ -449,13 +449,12 @@ public interface SyncDataSource<U, T> {
 		}
 
 		@Override
-		public List<T> queryEntities(List<Map<String, SyncDataFilter<T>>> filters) {
+		public Flux<T> queryEntities(List<Map<String, SyncDataFilter<T>>> filters) {
 			// The filters should have already passed validation above
 			if (filters.size() == 1) {
 				ID authFieldValue = ((SyncDataSource.ConstValueFilter<T, ID>) filters.get(0).get(theAuthFieldName)).getValue();
 				return getEntities(authFieldValue)//
-					.filter(job -> SyncDataSource.passesAll(job, filters.get(0)))//
-					.toList();
+					.filter(job -> SyncDataSource.passesAll(job, filters.get(0)));
 			} else {
 				Map<ID, List<Map<String, SyncDataFilter<T>>>> filtersByAuth = new HashMap<>();
 				for (Map<String, SyncDataFilter<T>> filter : filters) {
@@ -464,14 +463,9 @@ public interface SyncDataSource<U, T> {
 					if (filter.size() > 1)
 						valueFilters.add(filter);
 				}
-				List<T> entities = new ArrayList<>();
-				for (Map.Entry<ID, List<Map<String, SyncDataFilter<T>>>> authValue : filtersByAuth.entrySet()) {
-					Stream<T> authValues = getEntities(authValue.getKey());
-					if (!authValue.getValue().isEmpty())
-						authValues = authValues.filter(job -> SyncDataSource.passesAny(job, authValue.getValue()));
-					authValues.forEach(entities::add);
-				}
-				return entities;
+				return Flux.fromIterable(filtersByAuth.entrySet())//
+					.flatMap(authValue -> getEntities(authValue.getKey())//
+						.filter(entity -> SyncDataSource.passesAny(entity, authValue.getValue())));
 			}
 		}
 	}

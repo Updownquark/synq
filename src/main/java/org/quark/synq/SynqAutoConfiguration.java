@@ -2,7 +2,6 @@ package org.quark.synq;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -30,19 +29,17 @@ public class SynqAutoConfiguration {
 	@Bean
 	@ConditionalOnProperty(name = "quark.synq.scaling.enabled", havingValue = "false", matchIfMissing = true)
 	<U> LocalMutationNotificationService getLocalEntityNotificationService(//
-		ApplicationEventPublisher springEventPublisher, //
 		@Value("${quark.sync.scaling.max-events}") int maxEvents) {
-		return new LocalMutationNotificationService(springEventPublisher, maxEvents);
+		return new LocalMutationNotificationService(maxEvents);
 	}
 
 	@Bean
 	@ConditionalOnProperty(name = "quark.synq.scaling.enabled", havingValue = "true", matchIfMissing = false)
 	<U> RedisMutationNotificationService getRedisEntityNotificationService(//
 		ReactiveRedisTemplate<String, String> redisTemplate, //
-		ApplicationEventPublisher springEventPublisher, //
 		@Value("${quark.synq.scaling.stream-key}") String streamKey, //
 		@Value("${quark.synq.max-events}") int maxEvents) {
-		return new RedisMutationNotificationService(redisTemplate, springEventPublisher, streamKey, maxEvents);
+		return new RedisMutationNotificationService(redisTemplate, streamKey, maxEvents);
 	}
 
 	@Bean
