@@ -4,11 +4,22 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.qommons.IterableUtils;
 import org.qommons.QommonsUtils;
@@ -193,7 +204,7 @@ public class SyncService<U> {
 	static final Logger log = LoggerFactory.getLogger(SyncService.class);
 
 	private final EntityMutationNotificationService theNotificationService;
-	private SyncUserResolver<U> theUserIdentity;
+	private SynqUserIdentifier<U> theUserIdentity;
 
 	private final Map<String, SyncDataSource<U, ?>> theDataSources;
 	private final Map<String, ClientEventStream> theClientStreams;
@@ -210,7 +221,7 @@ public class SyncService<U> {
 	 * @param notificationService The entity notification service to listen to
 	 * @param userId Resolves IDs for user objects
 	 */
-	public SyncService(EntityMutationNotificationService notificationService, SyncUserResolver<U> userId) {
+	public SyncService(EntityMutationNotificationService notificationService, SynqUserIdentifier<U> userId) {
 		theNotificationService = notificationService;
 		theUserIdentity = userId;
 		theDataSources = new ConcurrentHashMap<>();
@@ -218,17 +229,17 @@ public class SyncService<U> {
 		theLoggedMissingEntityTypes = new ConcurrentHashMap<>();
 
 		theNotificationService.mutations()//
-		.publishOn(Schedulers.boundedElastic())//
-		.concatMap(event -> Mono.fromCallable(() -> parseEvent(event)))//
-		.filter(Objects::nonNull)//
-		// .doOnNext(theLiveSink::tryEmitNext)//
-		.doOnNext(event -> {
-			if (log.isDebugEnabled())
-				log.debug("Received data mod " + event);
-			// Enforces a non-blocking busy loop back-off to guarantee thread emission safety
-			theLiveSink.emitNext(event, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(2)));
-		})//
-		.subscribe();
+			.publishOn(Schedulers.boundedElastic())//
+			.concatMap(event -> Mono.fromCallable(() -> parseEvent(event)))//
+			.filter(Objects::nonNull)//
+			// .doOnNext(theLiveSink::tryEmitNext)//
+			.doOnNext(event -> {
+				if (log.isDebugEnabled())
+					log.debug("Received data mod " + event);
+				// Enforces a non-blocking busy loop back-off to guarantee thread emission safety
+				theLiveSink.emitNext(event, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(2)));
+			})//
+			.subscribe();
 	}
 
 	/**
@@ -398,7 +409,7 @@ public class SyncService<U> {
 			SubscriptionChangeEvent<U, T> toEvent() {
 				return new SubscriptionChangeEvent<U, T>(streamId, source, //
 					unsubscribe.isEmpty() ? null : unsubscribe, //
-						subscribe.isEmpty() ? null : subscribe, withInitialData);
+					subscribe.isEmpty() ? null : subscribe, withInitialData);
 			}
 		}
 		Map<String, SubChange<?>> groupedSubChanges = new HashMap<>();
@@ -434,7 +445,7 @@ public class SyncService<U> {
 					throw new IllegalArgumentException("Subscriptions must be JSON objects");
 				SyncDataSubscription<U, ?> sub = parseSubscription(me, (JsonObject) jsonSub);
 				subscriptionIds
-				.add(new StringBuilder(sub.getDataSource().getEntityTypeName()).append('/').append(sub.getSubscriptionId()).toString());
+					.add(new StringBuilder(sub.getDataSource().getEntityTypeName()).append('/').append(sub.getSubscriptionId()).toString());
 				groupedSubChanges.computeIfAbsent(sub.getDataSource().getEntityTypeName(), _ -> {
 					return new SubChange<>(sub.getDataSource());
 				}).add(sub);
@@ -498,7 +509,7 @@ public class SyncService<U> {
 
 			for (SyncDataSubscription<U, ?> sub : subscriptions) {
 				theSubscriptions.computeIfAbsent(sub.getDataSource().getEntityTypeName(), _ -> new ConcurrentHashMap<>())
-				.put(sub.getSubscriptionId(), sub);
+					.put(sub.getSubscriptionId(), sub);
 			}
 
 			// Use Flux.defer to guarantee that the underlying hot eventFlux is subscribed to
@@ -515,38 +526,38 @@ public class SyncService<U> {
 					return pass;
 				})//
 				.flatMap(this::processDataEvent, 1)//
-				);
+			);
 
 			// Compile the handshake payload sequence records lazily inside an iterable block
-			Flux<ServerSentEvent<String>> initFlux = Flux.defer(() -> {
+			Flux<ServerSentEvent<String>> initFlux = Flux.<ServerSentEvent<String>> defer(() -> {
 				JsonObject initEventJson = new JsonObject()//
 					.with("type", "init")//
 					.with("sequence", theSequence.getAndIncrement())//
 					.with("streamId", streamId)//
 					.with("resume", catchUp)//
-					;
+				;
 				if (!catchUp) {
 					initEventJson.with("lastEventId", lastEventId == null ? null : lastEventId.toString());
 				}
 				initEventJson.with("initSubscriptions", subscriptions.stream().map(sub -> new StringBuilder()//
 					.append(sub.getDataSource().getEntityTypeName()).append('/').append(sub.getSubscriptionId()).toString())//
 					.toList());
-				List<ServerSentEvent<String>> initialEvents = new ArrayList<>();
-				initialEvents.add(ServerSentEvent.<String> builder()//
+				ServerSentEvent<String> initEvent = ServerSentEvent.<String> builder()//
 					.id("")//
 					.data(initEventJson.toString())//
-					.build());
+					.build();
 				if (!catchUp && !subscriptions.isEmpty()) {
 					// If we're not catching up, we need to populate the initial data for all initial subscriptions
-					for (Map<String, SyncDataSubscription<U, ?>> typeSubscriptions : theSubscriptions.values()) {
-						String initialData = populateInitialData(typeSubscriptions);
-						initialEvents.add(ServerSentEvent.<String> builder()//
-							.id("")//
-							.data(initialData)//
-							.build());
-					}
-				}
-				return Flux.fromIterable(initialEvents);
+					return Flux.concat(Flux.just(initEvent), Flux.fromIterable(theSubscriptions.values())//
+						.flatMap(typeSubscriptions -> populateInitialData(typeSubscriptions)//
+							.map(initialData -> ServerSentEvent.<String> builder()//
+								.id("")//
+								.data(initialData)//
+								.build())//
+					)//
+					);
+				} else
+					return Flux.just(initEvent);
 			});
 			Flux<ServerSentEvent<String>> staticOutputFlux = Flux.concat(initFlux, processedEventFlux);
 			Flux<ServerSentEvent<String>> subUpdateOutputFlux = theSubscriptionUpdateEventSink.asFlux()//
@@ -564,34 +575,42 @@ public class SyncService<U> {
 				Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(2)));
 		}
 
-		private <T> String populateInitialData(Map<String, SyncDataSubscription<U, ?>> typeSubscriptions) {
+		private <T> Mono<String> populateInitialData(Map<String, SyncDataSubscription<U, ?>> typeSubscriptions) {
 			SyncDataSource<U, T> dataSource = typeSubscriptions.values().stream().findFirst().map(SyncDataSubscription::getDataSource)
 				.map(ds -> (SyncDataSource<U, T>) ds).get();
 			StringBuilder initialDataJson = new StringBuilder("{\"type\":\"reset\"")//
-				.append(",\"sequence\":").append(theSequence.getAndIncrement())//
 				.append(",\"entityType\":\"").append(dataSource.getEntityTypeName()).append('"')//
 				.append(",\"entities\":[");
-			boolean[] first = { true };
-			Flux<T> initialEntities = dataSource.queryEntities(typeSubscriptions.values().stream()
-				.map(sub -> (SyncDataSubscription<U, T>) sub).map(sub -> sub.getFilters(false)).toList());
-			initialEntities.toStream().forEach(entity -> {
-				boolean include = false;
-				for (SyncDataSubscription<U, ?> sub : typeSubscriptions.values()) {
-					if (((SyncDataSubscription<U, T>) sub).isIncluded(entity)) {
-						include = true;
-						break;
+			Mono<List<T>> initialEntities = dataSource.queryEntities(typeSubscriptions.values().stream()//
+				.map(sub -> (SyncDataSubscription<U, T>) sub)//
+				.map(sub -> sub.getFilters(false))//
+				.toList()//
+			)//
+				.filter(entity -> {
+					for (SyncDataSubscription<U, ?> sub : typeSubscriptions.values()) {
+						if (((SyncDataSubscription<U, T>) sub).isIncluded(entity)) {
+							return true;
+						}
 					}
-				}
-				if (include) {
-					if (first[0])
-						first[0] = false;
+					return false;
+				}).collect(Collectors.toList());
+			String eventPrefix = initialDataJson.toString();
+			initialDataJson.setLength(0);
+			return initialEntities.map(entities -> {
+				initialDataJson.append(eventPrefix);
+				boolean first = true;
+				for (T entity : entities) {
+					if (first)
+						first = false;
 					else
 						initialDataJson.append(',');
-					initialDataJson.append(dataSource.serialize(entity).toString());
+					String serialized = dataSource.serialize(entity).toString();
+					System.out.println("Initial entity: " + serialized);
+					initialDataJson.append(serialized);
 				}
+				initialDataJson.append("],\"sequence\":").append(theSequence.getAndIncrement());
+				return initialDataJson.append('}').toString();
 			});
-			initialDataJson.append("]}");
-			return initialDataJson.toString();
 		}
 
 		private <T> Flux<ServerSentEvent<String>> modifySubscriptions(SubscriptionChangeEvent<U, T> event) {
@@ -622,7 +641,7 @@ public class SyncService<U> {
 						debugStr.append("\n\tNo remaining subscriptions");
 				} else if (debugStr != null) {
 					debugStr.append("\n\t").append(typeSubscriptions.size()).append(" Remaining subscriptions: ")
-					.append(typeSubscriptions.values());
+						.append(typeSubscriptions.values());
 				}
 
 				if (event.withInitialData && typeSubscriptions != null) {
@@ -633,7 +652,6 @@ public class SyncService<U> {
 			if (debugStr != null)
 				log.debug(debugStr.toString());
 
-			List<ServerSentEvent<String>> clientEvents = new ArrayList<>();
 			List<String> subIds = event.subscribe == null ? Collections.emptyList()
 				: event.subscribe.stream().map(SyncDataSubscription::getSubscriptionId).toList();
 			JsonObject clientEventJson = new JsonObject()//
@@ -642,38 +660,58 @@ public class SyncService<U> {
 				.with("entityType", event.getEntityTypeName())//
 				.with("newSubscriptions", subIds)//
 				.with("unsubscribed", event.unsubscribe == null ? Collections.emptyList() : BetterList.of(event.unsubscribe))//
-				;
-			clientEvents.add(ServerSentEvent.<String> builder()//
+			;
+			ServerSentEvent<String> initEvent = ServerSentEvent.<String> builder()//
 				.id("")//
 				.data(clientEventJson.toString())//
-				.build());
+				.build();
 
 			if (event.withInitialData) {
 				clientEventJson.clear()//
-				.with("type", "reset")//
-				.with("sequence", theSequence.getAndIncrement())//
-				.with("entityType", typeName);
-				if (targetFilters.isEmpty())
+					.with("type", "reset")//
+					.with("entityType", typeName);
+				Mono<List<T>> initData;
+				// boolean debug = "scenario".equals(typeName);
+				boolean debug = false;
+				if (targetFilters.isEmpty()) {
+					initData = Mono.just(Collections.emptyList());
 					clientEventJson.with("entities", Collections.emptyList());
-				else {
+				} else {
 					Flux<T> initialEntities = event.source.queryEntities(targetFilters);
-					Map<String, SyncDataSubscription<U, ?>> activeSubs = theSubscriptions.get(typeName);
-					if (activeSubs == null)
-						clientEventJson.with("entities", Collections.emptyList());
-					else {
-						clientEventJson.with("entities", initialEntities.toStream()//
-							.filter(entity -> activeSubs.values().stream()
-								.anyMatch(sub -> ((SyncDataSubscription<U, T>) sub).isIncluded(entity)))//
-							.map(entity -> event.source.serialize(entity))//
-							.toList());
+					if (debug) {
+						initialEntities = initialEntities.log(typeName + "-entities");
+						System.out.println("Compiling initial " + typeName + " entities");
 					}
+					initData = initialEntities//
+						.filter(entity -> {
+							if (debug)
+								System.out.println("Filtering " + entity);
+							return SyncDataSource.passesAny(entity, targetFilters);
+						})//
+						.collectList();
+					if (debug)
+						initData = initData.log(typeName + "-collected");
 				}
-				clientEvents.add(ServerSentEvent.<String> builder()//
-					.id("")//
-					.data(clientEventJson.toString())//
-					.build());
-			}
-			return Flux.fromIterable(clientEvents);
+				return Flux.concat(Flux.just(initEvent), //
+					initData.map(entities -> {
+						if (debug)
+							System.out.println("Initial entities (" + entities.size() + ")");
+						clientEventJson.with("entities", entities.stream()//
+							.map(entity -> {
+								Object serialized = event.source.serialize(entity);
+								if (debug)
+									System.out.println("\tInitial entity: " + serialized);
+								return serialized;
+							})//
+							.toList())//
+							.with("sequence", theSequence.getAndIncrement());
+						return ServerSentEvent.<String> builder()//
+							.id("")//
+							.data(clientEventJson.toString())//
+							.build();
+					}));
+			} else
+				return Flux.just(initEvent);
 		}
 
 		private <T> Flux<ServerSentEvent<String>> processDataEvent(SyncDataEvent<U, T> event) {
@@ -728,30 +766,33 @@ public class SyncService<U> {
 				});
 			});
 
-			for (Map.Entry<String, Set<String>> typeRemovals : pendingRemovals.entrySet())
-				revokeSubscriptions(typeRemovals.getKey(), typeRemovals.getValue(), events::add);
+			Flux<ServerSentEvent<String>> subChangeEvents = Flux.fromIterable(events);
+			Flux<ServerSentEvent<String>> revocations = Flux.fromIterable(pendingRemovals.entrySet())//
+				.flatMap(typeRemovals -> revokeSubscriptions(typeRemovals.getKey(), typeRemovals.getValue()));
 
+			Flux<ServerSentEvent<String>> dataEventFlux;
 			if (include[0]) {
 				if (logMsg != null)
 					logMsg.append("\n\tSend");
-				events.add(ServerSentEvent.<String> builder()//
+				dataEventFlux = Flux.just(ServerSentEvent.<String> builder()//
 					.id(event.getMessageId().toString())//
 					.data(event.toClientJson(theSequence.getAndIncrement()))//
 					.build());
-			}
+			} else
+				dataEventFlux = Flux.empty();
 			if (logMsg != null)
 				log.debug(logMsg.toString());
-			return Flux.fromIterable(events);
+			return Flux.concat(subChangeEvents, revocations, dataEventFlux);
 		}
 
-		private <T> void revokeSubscriptions(String entityType, Set<String> revocations, Consumer<ServerSentEvent<String>> onRevoke) {
+		private <T> Flux<ServerSentEvent<String>> revokeSubscriptions(String entityType, Set<String> revocations) {
 			List<Map<String, SyncDataFilter<T>>> revokedFilters = new ArrayList<>();
 
 			// Extract the revoked filters quickly inside an atomic synchronization block
 			synchronized (theSubscriptions) {
 				Map<String, SyncDataSubscription<U, ?>> typeSubscriptions = theSubscriptions.get(entityType);
 				if (typeSubscriptions == null)
-					return;
+					return Flux.empty();
 
 				for (String subId : revocations) {
 					SyncDataSubscription<U, ?> sub = typeSubscriptions.get(subId);
@@ -761,12 +802,13 @@ public class SyncService<U> {
 				}
 			}
 			if (revokedFilters.isEmpty())
-				return;
+				return Flux.empty();
 
 			SyncDataSource<U, T> source = (SyncDataSource<U, T>) theDataSources.get(entityType);
 			// Query the database safely outside all locks
 			Flux<T> potentiallyRevokedEntities = source.queryEntities(revokedFilters);
 
+			Flux<T> revokedEntities;
 			synchronized (theSubscriptions) {
 				Map<String, SyncDataSubscription<U, ?>> typeSubscriptions = theSubscriptions.get(entityType);
 
@@ -777,31 +819,27 @@ public class SyncService<U> {
 						theSubscriptions.remove(entityType);
 					}
 				}
-
-				// Evaluate visibility safely inside the lock block.
-				// No concurrent API call can modify the filters while this loop executes.
-				JsonObject json = new JsonObject();
-				potentiallyRevokedEntities.toStream().forEach(entity -> {
-					boolean stillVisible = false;
-
-					if (typeSubscriptions != null && !typeSubscriptions.isEmpty()) {
-						stillVisible = typeSubscriptions.values().stream()
-							.anyMatch(sub -> ((SyncDataSubscription<U, T>) sub).isIncluded(entity));
-					}
-
-					if (!stillVisible) {
-						onRevoke.accept(ServerSentEvent.<String> builder()//
-							.id("")//
-							.data(json.clear()//
-								.with("type", "remove")//
-								.with("sequence", theSequence.getAndIncrement())//
-								.with("entityType", entityType)//
-								.with("entity", source.serialize(entity))//
-								.toString())//
-							.build());
-					}
-				});
+				if (typeSubscriptions == null)
+					revokedEntities = potentiallyRevokedEntities;
+				else {
+					List<Map<String, SyncDataFilter<T>>> filterCaptures = typeSubscriptions.values().stream()//
+						.map(sub -> (Map<String, SyncDataFilter<T>>) (Map<?, ?>) sub.getFilters(true))//
+						.toList();
+					revokedEntities = potentiallyRevokedEntities//
+						.filter(entity -> SyncDataSource.passesAny(entity, filterCaptures));
+				}
 			}
+
+			return revokedEntities//
+				.map(entity -> ServerSentEvent.<String> builder()//
+					.id("")//
+					.data(new JsonObject()//
+						.with("type", "remove")//
+						.with("entityType", entityType)//
+						.with("entity", source.serialize(entity))//
+						.with("sequence", theSequence.getAndIncrement())//
+						.toString())//
+					.build());
 		}
 	}
 

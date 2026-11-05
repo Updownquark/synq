@@ -7,11 +7,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * REST controller for synq
@@ -22,7 +26,7 @@ import reactor.core.publisher.Flux;
 @RequestMapping("/api/synq")
 public class SyncController<U> {
 	private final SyncService<U> theSyncService;
-	private final SyncUserResolver<U> theUserResolver;
+	private final SynqUserResolver<U> theUserResolver;
 
 	/**
 	 * Creates the sync controller
@@ -30,7 +34,7 @@ public class SyncController<U> {
 	 * @param syncService The sync service
 	 * @param userResolver The resolver for the currently authenticated user
 	 */
-	public SyncController(SyncService<U> syncService, SyncUserResolver<U> userResolver) {
+	public SyncController(SyncService<U> syncService, SynqUserResolver<U> userResolver) {
 		theSyncService = syncService;
 		theUserResolver = userResolver;
 	}
@@ -44,32 +48,37 @@ public class SyncController<U> {
 	 */
 	@GetMapping(value = "/init", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<ServerSentEvent<String>> initStream(//
-		@RequestParam(required = false) String subscriptions, //
-		@RequestParam(required = false) String lastEventId) {
+		@RequestParam(value = "subscriptions", required = false) String subscriptions, //
+		@RequestParam(value = "lastEventId", required = false) String lastEventId) {
 
-		U user = theUserResolver.getCurrentUser();
-		return theSyncService.initStream(user, lastEventId, subscriptions);
+		return theUserResolver.getCurrentUser()//
+			.flatMapMany(user -> theSyncService.initStream(user, lastEventId, subscriptions));
 	}
 
 	/**
 	 * Modifies an existing sync stream
 	 * 
+	 * @param request The subscription modification request
+	 * @return The IDs of the new subscriptions
+	 */
+	@PostMapping("/modify")
+	public Mono<List<String>> modifySubscriptions(@RequestBody SubscriptionModificationRequest request) {
+		if (request.unsubscribe() == null && request.subscribe() == null)
+			return Mono.just(Collections.emptyList());
+
+		return theUserResolver.getCurrentUser()//
+			.map(user -> theSyncService.modifySubscriptions(user, request.streamId(), request.unsubscribe(), request.subscribe(),
+				Boolean.TRUE.equals(request.withInitialData())));
+	}
+
+	/**
+	 * The body of a subscription modification request
+	 * 
 	 * @param streamId The ID of the stream to modify
 	 * @param unsubscribe A list of IDs of subscriptions to unsubscribe
 	 * @param subscribe Configuration for new subscriptions
 	 * @param withInitialData Whether to send the full initial data set for any affected entity sets
-	 * @return The IDs of the new subscriptions
 	 */
-	@PostMapping("/modify")
-	public List<String> modifySubscriptions(//
-		@RequestParam(required = true) String streamId, //
-		@RequestParam(required = false) List<String> unsubscribe, //
-		@RequestParam(required = false) String subscribe, //
-		@RequestParam(required = false) Boolean withInitialData) {
-		if (unsubscribe == null && subscribe == null)
-			return Collections.emptyList();
-
-		U user = theUserResolver.getCurrentUser();
-		return theSyncService.modifySubscriptions(user, streamId, unsubscribe, subscribe, Boolean.TRUE.equals(withInitialData));
-	}
+	public static record SubscriptionModificationRequest(@NotNull @NotBlank String streamId, List<String> unsubscribe, String subscribe,
+		Boolean withInitialData) {}
 }

@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
  * Auto-configures Synq for a Spring application.
  * </p>
  * <p>
- * A {@link SyncUserResolver} bean must be exposed by the application.
+ * A {@link SynqUserResolver} bean must be exposed by the application.
  * </p>
  * Configuration properties:
  * <ul>
@@ -44,12 +44,12 @@ public class SynqAutoConfiguration {
 
 	@Bean
 	<U> SyncService<U> getSyncService(EntityMutationNotificationService entityNotificationService,
-		SyncUserResolver<U> userIdentifier) {
+		SynqUserIdentifier<U> userIdentifier) {
 		return new SyncService<>(entityNotificationService, userIdentifier);
 	}
 
 	@Bean
-	<U> SyncController<U> getSyncController(SyncService<U> syncService, SyncUserResolver<U> userResolver) {
+	<U> SyncController<U> getSyncController(SyncService<U> syncService, SynqUserResolver<U> userResolver) {
 		return new SyncController<>(syncService, userResolver);
 	}
 }

@@ -3,7 +3,15 @@ package org.quark.synq;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -62,7 +70,11 @@ public interface SyncDataSource<U, T> {
 	 * @return Whether the given entity passes all of the filters in the map
 	 */
 	public static <T> boolean passesAll(T entity, Map<String, SyncDataFilter<T>> filters) {
-		return filters.values().stream().allMatch(filter -> filter.include(entity));
+		for (SyncDataFilter<T> filter : filters.values()) {
+			if (!filter.include(entity))
+				return false;
+		}
+		return true;
 	}
 
 	/**
@@ -300,9 +312,10 @@ public interface SyncDataSource<U, T> {
 
 		private static <T, F> SyncDataFilterType<T> createFilterType(Field field, ObjectMapper objectMapper) {
 			Class<?> type = field.getType();
+			boolean uuid = type == UUID.class;
 			boolean primitive = type.isPrimitive() || type == String.class || Number.class.isAssignableFrom(type) || type == Boolean.class;
-			Field idField = primitive ? null : getIdField(type.getDeclaredFields());
-			if (!primitive && idField == null)
+			Field idField = (uuid || primitive) ? null : getIdField(type.getDeclaredFields());
+			if (!primitive && !uuid && idField == null)
 				return null;
 			field.setAccessible(true);
 			if (idField != null)
@@ -317,7 +330,7 @@ public interface SyncDataSource<U, T> {
 			};
 			Function<T, F> getter;
 			Class<F> fieldType;
-			if (primitive) {
+			if (primitive || uuid) {
 				getter = (Function<T, F>) simpleGetter;
 				fieldType = (Class<F>) type;
 			} else {
@@ -325,6 +338,7 @@ public interface SyncDataSource<U, T> {
 					Object fieldValue = simpleGetter.apply(entity);
 					if (fieldValue == null)
 						return null;
+					F fv;
 					try {
 						return (F) idField.get(fieldValue);
 					} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -335,7 +349,13 @@ public interface SyncDataSource<U, T> {
 			}
 			return jsonFilterValue -> {
 				try {
-					Object coercedValue = objectMapper.convertValue(jsonFilterValue, fieldType);
+					Object coercedValue;
+					if (uuid) {
+						coercedValue = objectMapper.convertValue(jsonFilterValue, String.class);
+						if (coercedValue != null)
+							coercedValue = UUID.fromString((String) coercedValue);
+					} else
+						coercedValue = objectMapper.convertValue(jsonFilterValue, fieldType);
 					return new ConstValueFilter<>(getter, coercedValue);
 				} catch (RuntimeException e) {
 					ParseException x = new ParseException(
@@ -454,7 +474,7 @@ public interface SyncDataSource<U, T> {
 			if (filters.size() == 1) {
 				ID authFieldValue = ((SyncDataSource.ConstValueFilter<T, ID>) filters.get(0).get(theAuthFieldName)).getValue();
 				return getEntities(authFieldValue)//
-					.filter(job -> SyncDataSource.passesAll(job, filters.get(0)));
+					.filter(entity -> SyncDataSource.passesAll(entity, filters.get(0)));
 			} else {
 				Map<ID, List<Map<String, SyncDataFilter<T>>>> filtersByAuth = new HashMap<>();
 				for (Map<String, SyncDataFilter<T>> filter : filters) {
@@ -465,7 +485,7 @@ public interface SyncDataSource<U, T> {
 				}
 				return Flux.fromIterable(filtersByAuth.entrySet())//
 					.flatMap(authValue -> getEntities(authValue.getKey())//
-						.filter(entity -> SyncDataSource.passesAny(entity, authValue.getValue())));
+						.filter(value -> SyncDataSource.passesAny(value, authValue.getValue())));
 			}
 		}
 	}
