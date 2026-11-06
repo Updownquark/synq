@@ -90,7 +90,7 @@ public class SyncService<U> {
 			theEntity = entity;
 			theEntityJson = entityJson;
 			theEventJson = new StringBuilder("{")//
-				.append("\"type\":\"").append(isPresent ? "addOrUpdate" : "remove").append('"')//
+				.append("\"type\":\"").append(isPresent ? "upsert" : "remove").append('"')//
 				.append(",\"entityType\":\"").append(theSource.getEntityTypeName()).append('"')//
 				.append(",\"entity\":").append(theEntityJson)//
 				.append(",\"sequence\":").toString();
